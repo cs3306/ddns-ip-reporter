@@ -1,24 +1,19 @@
 services:
   ddns:
-    image: cs3306/ddns:latest        # 从 Docker Hub 拉取
-    # build: .                       # 本地构建时取消注释
+    image: cs3306/ddns-ip-reporter:latest
     container_name: ddns
     restart: unless-stopped
     ports:
-      - "127.0.0.1:8081:8080"        # 只监听本地，通过宿主机 nginx 反代暴露
+      - "127.0.0.1:8081:8080"
     environment:
-      - DDNS_TOKEN=${DDNS_TOKEN}     # 从 .env 文件读取
-      - NGINX_CONF_DIR=/etc/nginx/conf.d
-      - NGINX_RELOAD_CMD=kill -HUP $(cat /run/nginx/nginx.pid)
+      - DDNS_TOKEN=${DDNS_TOKEN}
+      - NGINX_CONF_DIR=/etc/nginx/ddns
       - STATE_FILE=/data/state.json
     volumes:
-      - /etc/nginx/conf.d:/etc/nginx/conf.d          # 写入 upstream conf
-      - /run/nginx.pid:/run/nginx.pid:ro              # nginx reload 需要读取 pid
-      - /var/run/nginx:/var/run/nginx                 # nginx unix socket (如果用的话)
-      - ddns_data:/data                               # 持久化 state.json
-    # nginx -s reload 通过发送信号给宿主机 nginx 进程实现
-    # 需要容器内有 nginx 二进制（已在 Dockerfile 中安装）
-    pid: host                        # 共享宿主机 PID namespace，使信号能发到宿主机进程
+      - /etc/nginx/ddns:/etc/nginx/ddns
+      - /run/nginx.pid:/run/nginx/nginx.pid:ro
+      - ddns_data:/data
+    pid: host
     logging:
       driver: "json-file"
       options:
