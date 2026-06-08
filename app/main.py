@@ -17,12 +17,7 @@ log = logging.getLogger(__name__)
 TOKEN          = os.environ["DDNS_TOKEN"]
 NGINX_CONF_DIR = os.environ.get("NGINX_CONF_DIR", "/etc/nginx/ddns")
 STATE_FILE     = os.environ.get("STATE_FILE", "/data/state.json")
-
-NGINX_PID_FILES = [
-    "/run/nginx/nginx.pid",
-    "/run/nginx.pid",
-    "/var/run/nginx.pid",
-]
+NGINX_PID_FILE = os.environ.get("NGINX_PID_FILE", "/run/nginx/nginx.pid")
 
 # ── State ──────────────────────────────────────────────────────────────────────
 def load_state() -> dict:
@@ -47,20 +42,10 @@ def write_upstream(node: str, ip: str):
     log.info(f"Wrote {conf_path}")
 
 def reload_nginx() -> tuple[bool, str]:
-    # Find nginx PID
-    pid = None
-    for pid_file in NGINX_PID_FILES:
-        try:
-            content = Path(pid_file).read_text().strip()
-            if content:
-                pid = int(content)
-                log.info(f"Found nginx pid={pid} in {pid_file}")
-                break
-        except Exception:
-            continue
-
-    if not pid:
-        err = f"cannot find nginx pid in {NGINX_PID_FILES}"
+    try:
+        pid = int(Path(NGINX_PID_FILE).read_text().strip())
+    except Exception as e:
+        err = f"cannot read nginx pid from {NGINX_PID_FILE}: {e}"
         log.error(err)
         return False, err
 

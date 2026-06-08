@@ -1,20 +1,29 @@
 FROM python:3.12-alpine
 
-# nginx binary needed for `nginx -t` and `nginx -s reload`
-# these talk to the HOST nginx via the bind-mounted /run/nginx.pid / unix socket
-RUN apk add --no-cache nginx
+# Install nginx and supervisord
+RUN apk add --no-cache nginx supervisor
 
+# Create required directories
+RUN mkdir -p /run/nginx \
+             /etc/nginx/ddns \
+             /etc/nginx/sites \
+             /etc/nginx/certs \
+             /var/log/nginx \
+             /data
+
+# Install Python dependencies
 WORKDIR /app
 COPY app/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY app/main.py .
 
-EXPOSE 8080
+# nginx config
+COPY nginx/conf/nginx.conf /etc/nginx/nginx.conf
 
-CMD ["gunicorn", "main:app", \
-     "--bind", "0.0.0.0:8080", \
-     "--workers", "2", \
-     "--timeout", "30", \
-     "--access-logfile", "-", \
-     "--error-logfile", "-"]
+# supervisord config
+COPY supervisord.conf /etc/supervisord.conf
+
+EXPOSE 80 443
+
+CMD ["/usr/bin/supervisord", "-c", "/etc/supervisord.conf"]

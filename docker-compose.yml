@@ -1,19 +1,19 @@
 services:
   ddns:
     image: cs3306/ddns-ip-reporter:latest
+    # build: .
     container_name: ddns
     restart: unless-stopped
     ports:
-      - "127.0.0.1:8081:8080"
+      - "80:80"
+      - "443:443"
     environment:
       - DDNS_TOKEN=${DDNS_TOKEN}
-      - NGINX_CONF_DIR=/etc/nginx/ddns
-      - STATE_FILE=/data/state.json
     volumes:
-      - /etc/nginx/ddns:/etc/nginx/ddns
-      - /run/nginx.pid:/run/nginx/nginx.pid:ro
-      - ddns_data:/data
-    pid: host
+      - ./nginx/sites:/etc/nginx/sites      # 用户放自己的 server 块配置
+      - ./nginx/certs:/etc/nginx/certs      # 用户放证书
+      - ./nginx/ddns:/etc/nginx/ddns        # 自动生成的 IP 变量文件（勿手动编辑）
+      - ddns_data:/data                     # 持久化 state.json
     logging:
       driver: "json-file"
       options:
