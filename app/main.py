@@ -56,6 +56,7 @@ def reload_nginx() -> tuple[bool, str]:
     result = subprocess.run(
         NGINX_RELOAD.split(),
         capture_output=True, text=True
+        shell=True
     )
     if result.returncode != 0:
         err = result.stderr.strip()

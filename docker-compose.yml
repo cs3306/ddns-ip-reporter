@@ -9,7 +9,7 @@ services:
     environment:
       - DDNS_TOKEN=${DDNS_TOKEN}     # 从 .env 文件读取
       - NGINX_CONF_DIR=/etc/nginx/conf.d
-      - NGINX_RELOAD_CMD=nginx -s reload
+      - NGINX_RELOAD_CMD=kill -HUP $(cat /run/nginx/nginx.pid)
       - STATE_FILE=/data/state.json
     volumes:
       - /etc/nginx/conf.d:/etc/nginx/conf.d          # 写入 upstream conf
