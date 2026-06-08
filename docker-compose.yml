@@ -1,19 +1,25 @@
 services:
   ddns:
-    image: cs3306/ddns-ip-reporter:latest
+    image: cs3306/ddns:latest
     # build: .
     container_name: ddns
     restart: unless-stopped
     ports:
-      - "80:80"
-      - "443:443"
+      # 模式一：容器直接对外，宿主机不需要 nginx
+      # 把下面两行取消注释，注释掉模式二
+      # - "80:80"
+      # - "443:443"
+
+      # 模式二：宿主机 nginx 反代到容器（默认）
+      # 宿主机 nginx proxy_pass 到这个端口即可
+      - "127.0.0.1:8080:80"
     environment:
       - DDNS_TOKEN=${DDNS_TOKEN}
     volumes:
-      - ./nginx/sites:/etc/nginx/sites      # 用户放自己的 server 块配置
-      - ./nginx/certs:/etc/nginx/certs      # 用户放证书
-      - ./nginx/ddns:/etc/nginx/ddns        # 自动生成的 IP 变量文件（勿手动编辑）
-      - ddns_data:/data                     # 持久化 state.json
+      - ./nginx/sites:/etc/nginx/sites    # 用户放自己的 location 块配置
+      - ./nginx/certs:/etc/nginx/certs    # 用户放证书
+      - ./nginx/ddns:/etc/nginx/ddns      # 自动生成的 IP 变量文件（勿手动编辑）
+      - ddns_data:/data
     logging:
       driver: "json-file"
       options:
