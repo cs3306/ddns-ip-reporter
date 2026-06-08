@@ -1,44 +1,21 @@
-# 示例：反代到动态 IP 的家庭路由器
-# 把这个文件复制到 nginx/sites/ 目录，按需修改
+# 示例：反代到动态 IP 节点
+# 把这个文件复制到 nginx/sites/ 目录并重命名为 xxx.conf
 #
-# 使用方式：
-#   1. 客户端上报时指定 node: "home"
-#   2. ddns 自动写入变量：set $home_ip x.x.x.x;
-#   3. 在 proxy_pass 里直接使用 $home_ip
+# 说明：
+#   - 容器只监听 80，SSL 由宿主机 nginx 或 CF 处理
+#   - node 名称对应变量前缀：node=home → $home_ip
+#   - 宿主机 nginx proxy_pass 到容器 80 端口即可
 
-server {
-    listen 443 ssl http2;
-    listen [::]:443 ssl http2;
-    server_name your-domain.com;
-
-    # 证书放在 nginx/certs/ 目录下
-    ssl_certificate     /etc/nginx/certs/your-domain.com.pem;
-    ssl_certificate_key /etc/nginx/certs/your-domain.com.key;
-
-    ssl_session_timeout 1d;
-    ssl_session_cache shared:SSL:10m;
-    ssl_prefer_server_ciphers on;
-
-    location / {
-        proxy_pass https://$home_ip:35283;
-        proxy_ssl_server_name on;
-        proxy_ssl_name your-domain.com;
-        proxy_ssl_verify off;
-
-        proxy_set_header Host              $host;
-        proxy_set_header X-Real-IP         $remote_addr;
-        proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto https;
-
-        proxy_http_version 1.1;
-        proxy_read_timeout 60s;
-        proxy_connect_timeout 30s;
-    }
-}
-
-server {
-    listen 80;
-    listen [::]:80;
-    server_name your-domain.com;
-    return 301 https://$host$request_uri;
+location / {
+    proxy_pass https://$home_ip:35283;
+    proxy_ssl_server_name on;
+    proxy_ssl_name <your-domain>;
+    proxy_ssl_verify off;
+    proxy_set_header Host              $host;
+    proxy_set_header X-Real-IP         $remote_addr;
+    proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto https;
+    proxy_http_version 1.1;
+    proxy_read_timeout 60s;
+    proxy_connect_timeout 30s;
 }
