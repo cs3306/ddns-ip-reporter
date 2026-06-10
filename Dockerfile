@@ -1,13 +1,6 @@
-FROM debian:bookworm-slim
+FROM python:3.12-alpine
 
-RUN apt-get update && apt-get install -y \
-    nginx \
-    python3 \
-    python3-pip \
-    supervisor \
-    curl \
-    tcpdump \
-    && rm -rf /var/lib/apt/lists/*
+RUN apk add --no-cache nginx supervisor
 
 RUN mkdir -p /run/nginx \
              /etc/nginx/ddns \
@@ -18,7 +11,7 @@ RUN mkdir -p /run/nginx \
 
 WORKDIR /app
 COPY app/requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt --break-system-packages
+RUN pip install --no-cache-dir -r requirements.txt
 
 COPY app/main.py .
 COPY nginx/conf/nginx.conf /etc/nginx/nginx.conf
